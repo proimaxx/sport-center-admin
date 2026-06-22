@@ -1,0 +1,115 @@
+:root {
+  --color-tennis: #E6F1FB;
+  --color-tennis-text: #0C447C;
+  --color-tennis-border: #85B7EB;
+  --color-padel: #EAF3DE;
+  --color-padel-text: #27500A;
+  --color-padel-border: #97C459;
+  --color-pickleball: #FAEEDA;
+  --color-pickleball-text: #633806;
+  --color-pickleball-border: #EF9F27;
+  --color-success: #1D9E75;
+  --color-danger: #E24B4A;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f5f3;
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1 { font-size: 22px; font-weight: 500; }
+h2 { font-size: 18px; font-weight: 500; }
+h3 { font-size: 16px; font-weight: 500; }
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid #ccc;
+  background: white;
+  padding: 8px 16px;
+  transition: background 0.15s;
+}
+button:hover { background: #f0f0ee; }
+
+input, select, textarea {
+  font-family: inherit;
+  font-size: 14px;
+  border: 0.5px solid #ccc;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  background: white;
+  color: #1a1a1a;
+  outline: none;
+  width: 100%;
+}
+input:focus, select:focus { border-color: #378ADD; }
+
+.card {
+  background: white;
+  border: 0.5px solid #e0e0dc;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+}
+
+.btn-primary {
+  background: var(--color-success);
+  color: white;
+  border: none;
+  font-weight: 500;
+}
+.btn-primary:hover { background: #0F6E56; }
+
+.btn-danger {
+  background: none;
+  color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+.btn-danger:hover { background: #FCEBEB; }
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-weight: 500;
+}
+.badge-tennis { background: var(--color-tennis); color: var(--color-tennis-text); }
+.badge-padel { background: var(--color-padel); color: var(--color-padel-text); }
+.badge-pickleball { background: var(--color-pickleball); color: var(--color-pickleball-text); }
+
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-slider:before {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: var(--color-success); }
+.toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
