@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 
 const links = [
   { to: '/', icon: '⛳', label: 'Campi' },
+  { to: '/pannello', icon: '📊', label: 'Pannello' },
   { to: '/piscina', icon: '🏊', label: 'Piscina' },
   { to: '/estivi', icon: '🏕️', label: 'Centri estivi' },
   { to: '/prenotazioni', icon: '📋', label: 'Prenotazioni' },

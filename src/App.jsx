@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './styles/global.css'
 import Sidebar from './components/Sidebar'
 import Campi from './pages/Campi'
+import Pannello from './pages/Pannello'
 import Piscina from './pages/Piscina'
 import Estivi from './pages/Estivi'
 import Prenotazioni from './pages/Prenotazioni'
@@ -16,6 +17,7 @@ export default function App() {
         <main style={{ flex: 1, overflowY: 'auto' }}>
           <Routes>
             <Route path="/" element={<Campi />} />
+            <Route path="/pannello" element={<Pannello />} />
             <Route path="/piscina" element={<Piscina />} />
             <Route path="/estivi" element={<Estivi />} />
             <Route path="/prenotazioni" element={<Prenotazioni />} />
