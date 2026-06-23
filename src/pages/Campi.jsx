@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { subscribeCampi, addCampo, updateCampo, deleteCampo } from '../firebase/services'
 
-const SPORT_TYPES = ['tennis', 'padel', 'pickleball']
+const SPORT_TYPES = ['tennis', 'padel', 'pickleball', 'calcio5']
 
 const defaultCampo = {
   nome: '', sport: 'tennis', indoor: false,
@@ -79,7 +79,9 @@ export default function Campi() {
             <div>
               <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Sport</label>
               <select value={form.sport} onChange={e => setForm(f => ({ ...f, sport: e.target.value }))}>
-                {SPORT_TYPES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                {SPORT_TYPES.map(s => <option key={s} value={s}>{
+                s === 'calcio5' ? 'Calcio a 5' : s.charAt(0).toUpperCase() + s.slice(1)
+              }</option>)}
               </select>
             </div>
             <div>
@@ -126,7 +128,7 @@ export default function Campi() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <span style={{ fontWeight: 500 }}>{campo.nome}</span>
-                  <span className={`badge badge-${campo.sport}`}>{campo.sport}</span>
+                  <span className={`badge badge-${campo.sport}`}>{campo.sport === 'calcio5' ? 'Calcio a 5' : campo.sport}</span>
                   <span className="badge" style={{ background: '#f0f0ee', color: '#555' }}>{campo.indoor ? 'Indoor' : 'Outdoor'}</span>
                   {!campo.attivo && <span className="badge" style={{ background: '#FCEBEB', color: '#A32D2D' }}>Disattivato</span>}
                 </div>

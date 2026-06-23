@@ -113,3 +113,4 @@ input:focus, select:focus { border-color: #378ADD; }
 }
 .toggle input:checked + .toggle-slider { background: var(--color-success); }
 .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
+.badge-calcio5 { background: #EAF3DE; color: #27500A; }
