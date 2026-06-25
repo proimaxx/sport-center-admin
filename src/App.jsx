@@ -16,8 +16,8 @@ export default function App() {
         <Sidebar />
         <main style={{ flex: 1, overflowY: 'auto' }}>
           <Routes>
-            <Route path="/" element={<Campi />} />
-            <Route path="/pannello" element={<Pannello />} />
+            <Route path="/" element={<Pannello />} />
+            <Route path="/campi" element={<Campi />} />
             <Route path="/piscina" element={<Piscina />} />
             <Route path="/estivi" element={<Estivi />} />
             <Route path="/prenotazioni" element={<Prenotazioni />} />
