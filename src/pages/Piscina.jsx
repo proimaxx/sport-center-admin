@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { db, dbPublic } from '../firebase/config'
 import {
   doc, getDoc, setDoc, onSnapshot,
-  collection, query, where, addDoc, serverTimestamp
+  collection, query, where, addDoc, serverTimestamp, getDocs
 } from 'firebase/firestore'
 
 const oggi = () => new Date().toISOString().split('T')[0]
@@ -37,8 +37,16 @@ export default function Piscina() {
   const [prenotazioni, setPrenotazioni] = useState([])
   const [cerca, setCerca] = useState('')
   const [showForm, setShowForm] = useState(false)
-  const [formPren, setFormPren] = useState({ clienteNome: '', clienteEmail: '', persone: 1, tipoIngresso: 'giornaliero', canale: 'in_sede' })
+  const [formPren, setFormPren] = useState({ clienteNome: '', clienteEmail: '', clienteTelefono: '', persone: 1, tipoIngresso: 'giornaliero', canale: 'in_sede' })
   const [formLoading, setFormLoading] = useState(false)
+  const [clienti, setClienti] = useState([])
+  const [suggerimenti, setSuggerimenti] = useState([])
+
+  useEffect(() => {
+    getDocs(collection(dbPublic, 'utenti')).then(snap => {
+      setClienti(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+    })
+  }, [])
 
   useEffect(() => {
     getDoc(doc(db, 'config', 'piscina')).then(snap => {
@@ -102,6 +110,7 @@ export default function Piscina() {
       await addDoc(collection(dbPublic, 'prenotazioniPiscina'), {
         clienteNome: formPren.clienteNome,
         clienteEmail: formPren.clienteEmail,
+        clienteTelefono: formPren.clienteTelefono,
         persone: formPren.persone,
         tipoIngresso: formPren.tipoIngresso,
         canale: formPren.canale,
@@ -112,7 +121,7 @@ export default function Piscina() {
         creadaAdmin: true,
       })
       setShowForm(false)
-      setFormPren({ clienteNome: '', clienteEmail: '', persone: 1, tipoIngresso: 'giornaliero', canale: 'in_sede' })
+      setFormPren({ clienteNome: '', clienteEmail: '', clienteTelefono: '', persone: 1, tipoIngresso: 'giornaliero', canale: 'in_sede' })
     } catch(e) { alert('Errore: ' + e.message) }
     setFormLoading(false)
   }
@@ -248,10 +257,42 @@ export default function Piscina() {
             <button onClick={() => setShowForm(false)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>✕</button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-            <div>
+            <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
               <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Nome cliente *</label>
-              <input placeholder="Nome e cognome" value={formPren.clienteNome}
-                onChange={e => setFormPren(f => ({ ...f, clienteNome: e.target.value }))} />
+              <input placeholder="Cerca per nome o cognome..." value={formPren.clienteNome}
+                onChange={e => {
+                  const val = e.target.value
+                  setFormPren(f => ({ ...f, clienteNome: val, clienteEmail: '', clienteTelefono: '' }))
+                  if (val.length >= 2) {
+                    const found = clienti.filter(c =>
+                      `${c.nome} ${c.cognome}`.toLowerCase().includes(val.toLowerCase())
+                    ).slice(0, 5)
+                    setSuggerimenti(found)
+                  } else {
+                    setSuggerimenti([])
+                  }
+                }} />
+              {suggerimenti.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '0.5px solid #e0e0dc', borderRadius: 8, zIndex: 50, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+                  {suggerimenti.map(c => (
+                    <div key={c.id} onClick={() => {
+                      setFormPren(f => ({ ...f, clienteNome: `${c.nome} ${c.cognome}`, clienteEmail: c.email || '', clienteTelefono: c.telefono || '' }))
+                      setSuggerimenti([])
+                    }}
+                      style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '0.5px solid #f0f0ee', fontSize: 14 }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f5f5f3'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                      <div style={{ fontWeight: 500 }}>{c.nome} {c.cognome}</div>
+                      <div style={{ fontSize: 12, color: '#888' }}>{c.telefono} · {c.email}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div>
+              <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Telefono</label>
+              <input placeholder="3331234567" value={formPren.clienteTelefono || ''}
+                onChange={e => setFormPren(f => ({ ...f, clienteTelefono: e.target.value }))} />
             </div>
             <div>
               <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Email (opzionale)</label>
@@ -314,6 +355,7 @@ export default function Piscina() {
             <div style={{ fontWeight: 500 }}>{p.clienteNome || 'Cliente'}</div>
             <div style={{ fontSize: 13, color: '#666' }}>
               {p.persone} {p.persone === 1 ? 'persona' : 'persone'} · {p.tipoIngresso === 'giornaliero' ? 'Giornaliero' : 'Mezza giornata'} · €{(getPrezzoIngresso(p) * (p.persone || 1)).toFixed(2)}
+              {p.clienteTelefono && ` · 📞 ${p.clienteTelefono}`}
               {p.clienteEmail && ` · ${p.clienteEmail}`}
             </div>
           </div>
