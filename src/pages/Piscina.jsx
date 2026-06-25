@@ -20,8 +20,15 @@ export default function Piscina() {
     postiMax: 50,
     prezzoGiornalieroFeriale: 10,
     prezzoGiornalieroFestivo: 14,
+    prezzoMattinaFeriale: 6,
+    prezzoMattinaFestivo: 8,
+    prezzoPomeriggioFeriale: 6,
+    prezzoPomeriggioFestivo: 8,
     prezzoMezzaFeriale: 7,
     prezzoMezzaFestivo: 10,
+    prezzoRidottoFeriale: 5,
+    prezzoRidottoFestivo: 7,
+    prezzoSoci: 6,
   })
   const [configLoading, setConfigLoading] = useState(false)
   const [configSaved, setConfigSaved] = useState(false)
@@ -71,8 +78,14 @@ export default function Piscina() {
 
   const getPrezzoIngresso = (p) => {
     const fest = isFestivo(p.data || data)
-    if (p.tipoIngresso === 'giornaliero') return fest ? config.prezzoGiornalieroFestivo : config.prezzoGiornalieroFeriale
-    return fest ? config.prezzoMezzaFestivo : config.prezzoMezzaFeriale
+    switch(p.tipoIngresso) {
+      case 'giornaliero': return fest ? config.prezzoGiornalieroFestivo : config.prezzoGiornalieroFeriale
+      case 'mattina': return fest ? config.prezzoMattinaFestivo : config.prezzoMattinaFeriale
+      case 'pomeriggio': return fest ? config.prezzoPomeriggioFestivo : config.prezzoPomeriggioFeriale
+      case 'ridotto': return fest ? config.prezzoRidottoFestivo : config.prezzoRidottoFeriale
+      case 'soci': return config.prezzoSoci || 6
+      default: return fest ? config.prezzoMezzaFestivo : config.prezzoMezzaFeriale
+    }
   }
 
   const incassoPrevisto = prenotazioni.reduce((acc, p) => acc + (getPrezzoIngresso(p) * (p.persone || 1)), 0)
@@ -145,20 +158,27 @@ export default function Piscina() {
               style={{ maxWidth: 200 }} />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            <div style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', gridColumn: '1 / -1' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Giornaliero</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {priceField('Feriale (€/persona)', 'prezzoGiornalieroFeriale')}
-                {priceField('Festivo (€/persona)', 'prezzoGiornalieroFestivo')}
+            {[
+              ['Giornaliero', 'prezzoGiornalieroFeriale', 'prezzoGiornalieroFestivo'],
+              ['Mattina', 'prezzoMattinaFeriale', 'prezzoMattinaFestivo'],
+              ['Pomeriggio', 'prezzoPomeriggioFeriale', 'prezzoPomeriggioFestivo'],
+              ['Mezza giornata', 'prezzoMezzaFeriale', 'prezzoMezzaFestivo'],
+              ['Ridotto (6-12 anni)', 'prezzoRidottoFeriale', 'prezzoRidottoFestivo'],
+            ].map(([label, keyF, keyW]) => (
+              <div key={label} style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', gridColumn: '1 / -1' }}>
+                <div style={{ fontSize: 12, fontWeight: 500, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {priceField('Feriale (€/persona)', keyF)}
+                  {priceField('Festivo (€/persona)', keyW)}
+                </div>
               </div>
+            ))}
+          <div style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', marginBottom: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Soci (tariffa unica)</div>
+            <div style={{ maxWidth: 200 }}>
+              {priceField('Prezzo soci (€/persona)', 'prezzoSoci')}
             </div>
-            <div style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', gridColumn: '1 / -1' }}>
-              <div style={{ fontSize: 12, fontWeight: 500, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mezza giornata</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                {priceField('Feriale (€/persona)', 'prezzoMezzaFeriale')}
-                {priceField('Festivo (€/persona)', 'prezzoMezzaFestivo')}
-              </div>
-            </div>
+          </div>
           </div>
           <button className="btn-primary" onClick={handleSaveConfig} disabled={configLoading}
             style={{ width: 'auto', padding: '8px 20px' }}>
@@ -247,7 +267,11 @@ export default function Piscina() {
               <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Tipo ingresso</label>
               <select value={formPren.tipoIngresso} onChange={e => setFormPren(f => ({ ...f, tipoIngresso: e.target.value }))}>
                 <option value="giornaliero">Giornaliero</option>
+                <option value="mattina">Mattina</option>
+                <option value="pomeriggio">Pomeriggio</option>
                 <option value="mezza">Mezza giornata</option>
+                <option value="ridotto">Ridotto (6-12 anni)</option>
+                <option value="soci">Soci</option>
               </select>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
@@ -311,7 +335,7 @@ export default function Piscina() {
               color: p.tipoIngresso === 'giornaliero' ? '#0C447C' : '#27500A',
               borderRadius: 99, fontSize: 11, padding: '3px 8px', fontWeight: 500
             }}>
-              {p.tipoIngresso === 'giornaliero' ? 'Giornaliero' : 'Mezza'}
+              {({'giornaliero':'Giornaliero','mattina':'Mattina','pomeriggio':'Pomeriggio','mezza':'Mezza','ridotto':'Ridotto','soci':'Soci'})[p.tipoIngresso] || p.tipoIngresso}
             </span>
             <span style={{
               background: p.canale === 'telefonica' ? '#FAEEDA' : p.canale === 'in_sede' ? '#EAF3DE' : '#f5f5f3',
