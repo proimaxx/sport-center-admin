@@ -10,9 +10,46 @@ const fmtData = (d) => {
   const date = new Date(d + 'T00:00:00')
   return date.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 }
+const getEaster = (year) => {
+  const a = year % 19
+  const b = Math.floor(year / 100)
+  const c = year % 100
+  const d = Math.floor(b / 4)
+  const e = b % 4
+  const f = Math.floor((b + 8) / 25)
+  const g = Math.floor((b - f + 1) / 3)
+  const h = (19 * a + b - d - g + 15) % 30
+  const i = Math.floor(c / 4)
+  const k = c % 4
+  const l = (32 + 2 * e + 2 * i - h - k) % 7
+  const m = Math.floor((a + 11 * h + 22 * l) / 451)
+  const month = Math.floor((h + l - 7 * m + 114) / 31)
+  const day = ((h + l - 7 * m + 114) % 31) + 1
+  return new Date(year, month - 1, day)
+}
+
 const isFestivo = (d) => {
-  const day = new Date(d + 'T00:00:00').getDay()
-  return day === 0 || day === 6
+  const date = new Date(d + 'T00:00:00')
+  const day = date.getDay()
+  const year = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  const mmdd = `${mm}-${dd}`
+
+  if (day === 0 || day === 6) return true
+
+  const nazionali = ['01-01','01-06','04-25','05-01','06-02','08-15','11-01','12-08','12-25','12-26']
+  if (nazionali.includes(mmdd)) return true
+
+  if (mmdd === '06-29') return true
+
+  const pasqua = getEaster(year)
+  const pasquetta = new Date(pasqua)
+  pasquetta.setDate(pasqua.getDate() + 1)
+  const formatDate = (dt) => `${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`
+  if (mmdd === formatDate(pasqua) || mmdd === formatDate(pasquetta)) return true
+
+  return false
 }
 
 export default function Piscina() {
@@ -507,3 +544,4 @@ export default function Piscina() {
     </div>
   )
 }
+// deploy gio 25 giu 2026 14:21:57 CEST
