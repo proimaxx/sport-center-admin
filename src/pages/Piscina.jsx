@@ -41,6 +41,8 @@ export default function Piscina() {
   const [formLoading, setFormLoading] = useState(false)
   const [clienti, setClienti] = useState([])
   const [suggerimenti, setSuggerimenti] = useState([])
+  const [modalModifica, setModalModifica] = useState(null)
+  const [modificaForm, setModificaForm] = useState({})
 
   useEffect(() => {
     getDocs(collection(dbPublic, 'utenti')).then(snap => {
@@ -92,11 +94,35 @@ export default function Piscina() {
       case 'pomeriggio': return fest ? config.prezzoPomeriggioFestivo : config.prezzoPomeriggioFeriale
       case 'ridotto': return fest ? config.prezzoRidottoFestivo : config.prezzoRidottoFeriale
       case 'soci': return config.prezzoSoci || 6
+      case 'omaggio': return 0
       default: return fest ? config.prezzoMezzaFestivo : config.prezzoMezzaFeriale
     }
   }
 
   const incassoPrevisto = prenotazioni.reduce((acc, p) => acc + (getPrezzoIngresso(p) * (p.persone || 1)), 0)
+
+  const handleModifica = async () => {
+    if (!modalModifica) return
+    const { doc: docFn, updateDoc } = await import('firebase/firestore')
+    try {
+      await updateDoc(docFn(dbPublic, 'prenotazioniPiscina', modalModifica.id), {
+        clienteNome: modificaForm.clienteNome,
+        clienteEmail: modificaForm.clienteEmail,
+        clienteTelefono: modificaForm.clienteTelefono,
+        tipoIngresso: modificaForm.tipoIngresso,
+        persone: modificaForm.persone,
+        canale: modificaForm.canale,
+      })
+      setModalModifica(null)
+    } catch(e) { alert('Errore: ' + e.message) }
+  }
+
+  const handleCancella = async (id) => {
+    if (!confirm('Cancellare questa prenotazione?')) return
+    const { doc: docFn, updateDoc } = await import('firebase/firestore')
+    await updateDoc(docFn(dbPublic, 'prenotazioniPiscina', id), { stato: 'cancellata' })
+    setModalModifica(null)
+  }
 
   const handleAddPrenotazione = async () => {
     if (!formPren.clienteNome.trim()) return alert('Inserisci il nome del cliente')
@@ -313,6 +339,7 @@ export default function Piscina() {
                 <option value="mezza">Mezza giornata</option>
                 <option value="ridotto">Ridotto (6-12 anni)</option>
                 <option value="soci">Soci</option>
+                <option value="omaggio">🎁 Omaggio</option>
               </select>
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
@@ -350,7 +377,10 @@ export default function Piscina() {
       )}
 
       {prenotazioniFiltrate.map(p => (
-        <div key={p.id} className="card" style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px' }}>
+        <div key={p.id} className="card" onClick={() => { setModalModifica(p); setModificaForm({ clienteNome: p.clienteNome || '', clienteEmail: p.clienteEmail || '', clienteTelefono: p.clienteTelefono || '', tipoIngresso: p.tipoIngresso || 'giornaliero', persone: p.persone || 1, canale: p.canale || 'online' }) }}
+          style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', cursor: 'pointer' }}
+          onMouseEnter={e => e.currentTarget.style.background = '#f9f9f7'}
+          onMouseLeave={e => e.currentTarget.style.background = 'white'}>
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 500 }}>{p.clienteNome || 'Cliente'}</div>
             <div style={{ fontSize: 13, color: '#666' }}>
@@ -377,7 +407,7 @@ export default function Piscina() {
               color: p.tipoIngresso === 'giornaliero' ? '#0C447C' : '#27500A',
               borderRadius: 99, fontSize: 11, padding: '3px 8px', fontWeight: 500
             }}>
-              {({'giornaliero':'Giornaliero','mattina':'Mattina','pomeriggio':'Pomeriggio','mezza':'Mezza','ridotto':'Ridotto','soci':'Soci'})[p.tipoIngresso] || p.tipoIngresso}
+              {({'giornaliero':'Giornaliero','mattina':'Mattina','pomeriggio':'Pomeriggio','mezza':'Mezza','ridotto':'Ridotto','soci':'Soci','omaggio':'🎁 Omaggio'})[p.tipoIngresso] || p.tipoIngresso}
             </span>
             <span style={{
               background: p.canale === 'telefonica' ? '#FAEEDA' : p.canale === 'in_sede' ? '#EAF3DE' : '#f5f5f3',
@@ -389,6 +419,61 @@ export default function Piscina() {
           </div>
         </div>
       ))}
+      {modalModifica && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
+          <div style={{ background: 'white', borderRadius: 16, padding: '1.5rem', width: '100%', maxWidth: 420 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3>Modifica prenotazione</h3>
+              <button onClick={() => setModalModifica(null)} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: '#888' }}>✕</button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Nome cliente</label>
+                <input value={modificaForm.clienteNome} onChange={e => setModificaForm(f => ({ ...f, clienteNome: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Telefono</label>
+                <input value={modificaForm.clienteTelefono} onChange={e => setModificaForm(f => ({ ...f, clienteTelefono: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Email</label>
+                <input value={modificaForm.clienteEmail} onChange={e => setModificaForm(f => ({ ...f, clienteEmail: e.target.value }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Tipo ingresso</label>
+                <select value={modificaForm.tipoIngresso} onChange={e => setModificaForm(f => ({ ...f, tipoIngresso: e.target.value }))}>
+                  <option value="giornaliero">Giornaliero</option>
+                  <option value="mattina">Mattina</option>
+                  <option value="pomeriggio">Pomeriggio</option>
+                  <option value="mezza">Mezza giornata</option>
+                  <option value="ridotto">Ridotto (6-12 anni)</option>
+                  <option value="soci">Soci</option>
+                  <option value="omaggio">🎁 Omaggio</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Persone</label>
+                <input type="number" min="1" value={modificaForm.persone} onChange={e => setModificaForm(f => ({ ...f, persone: parseInt(e.target.value) || 1 }))} />
+              </div>
+              <div>
+                <label style={{ fontSize: 12, color: '#666', display: 'block', marginBottom: 4 }}>Canale</label>
+                <select value={modificaForm.canale} onChange={e => setModificaForm(f => ({ ...f, canale: e.target.value }))}>
+                  <option value="online">🌐 Online</option>
+                  <option value="in_sede">🏢 In sede</option>
+                  <option value="telefonica">📞 Telefonica</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn-primary" onClick={handleModifica} style={{ flex: 1, padding: '10px' }}>Salva modifiche</button>
+              <button onClick={() => handleCancella(modalModifica.id)}
+                style={{ padding: '10px 16px', background: '#FCEBEB', color: '#A32D2D', border: '0.5px solid #F09595', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}>
+                Cancella
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
