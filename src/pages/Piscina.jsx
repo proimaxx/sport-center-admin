@@ -29,6 +29,7 @@ export default function Piscina() {
     prezzoRidottoFeriale: 5,
     prezzoRidottoFestivo: 7,
     prezzoSoci: 6,
+    prezzoSociRidotto: 4,
   })
   const [configLoading, setConfigLoading] = useState(false)
   const [configSaved, setConfigSaved] = useState(false)
@@ -95,6 +96,7 @@ export default function Piscina() {
       case 'ridotto': return fest ? config.prezzoRidottoFestivo : config.prezzoRidottoFeriale
       case 'soci': return config.prezzoSoci || 6
       case 'omaggio': return 0
+      case 'sociRidotto': return config.prezzoSociRidotto || 4
       default: return fest ? config.prezzoMezzaFestivo : config.prezzoMezzaFeriale
     }
   }
@@ -208,10 +210,16 @@ export default function Piscina() {
                 </div>
               </div>
             ))}
-          <div style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', marginBottom: 0 }}>
+          <div style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', marginBottom: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 500, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Soci (tariffa unica)</div>
             <div style={{ maxWidth: 200 }}>
               {priceField('Prezzo soci (€/persona)', 'prezzoSoci')}
+            </div>
+          </div>
+          <div style={{ background: '#f5f5f3', borderRadius: 8, padding: '12px', marginBottom: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 500, color: '#888', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Soci Ridotto (tariffa unica)</div>
+            <div style={{ maxWidth: 200 }}>
+              {priceField('Prezzo soci ridotto (€/persona)', 'prezzoSociRidotto')}
             </div>
           </div>
           </div>
@@ -222,21 +230,41 @@ export default function Piscina() {
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
-        <button onClick={() => changeDay(-1)} style={{ padding: '6px 12px' }}>←</button>
-        <div style={{ flex: 1, textAlign: 'center' }}>
-          <div style={{ fontWeight: 500 }}>{fmtData(data)}</div>
-          <span style={{
-            background: festivo ? '#FAEEDA' : '#E6F1FB',
-            color: festivo ? '#633806' : '#0C447C',
-            borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 500
-          }}>
-            {festivo ? 'Festivo' : 'Feriale'}
-          </span>
-        </div>
-        <button onClick={() => changeDay(1)} style={{ padding: '6px 12px' }}>→</button>
+      <div style={{ display: 'flex', gap: 8, marginBottom: '1rem', alignItems: 'center' }}>
+        {[0, 1, 2].map(delta => {
+          const d = new Date()
+          d.setDate(d.getDate() + delta)
+          const dateStr = d.toISOString().split('T')[0]
+          const labels = ['Oggi', 'Domani', 'Dopodomani']
+          const isSelected = data === dateStr
+          return (
+            <button key={delta} onClick={() => setData(dateStr)}
+              style={{
+                flex: 1, padding: '8px 6px', borderRadius: 8, fontSize: 13,
+                fontWeight: isSelected ? 500 : 400,
+                background: isSelected ? '#185FA5' : 'white',
+                color: isSelected ? 'white' : '#444',
+                border: isSelected ? 'none' : '0.5px solid #e0e0dc',
+                cursor: 'pointer', textAlign: 'center'
+              }}>
+              <div>{labels[delta]}</div>
+              <div style={{ fontSize: 11, opacity: 0.8, marginTop: 2 }}>
+                {d.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </div>
+            </button>
+          )
+        })}
         <input type="date" value={data} onChange={e => setData(e.target.value)}
           style={{ width: 'auto', padding: '6px 10px' }} />
+      </div>
+      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+        <span style={{
+          background: festivo ? '#FAEEDA' : '#E6F1FB',
+          color: festivo ? '#633806' : '#0C447C',
+          borderRadius: 99, padding: '3px 12px', fontSize: 12, fontWeight: 500
+        }}>
+          {festivo ? 'Festivo' : 'Feriale'} · {fmtData(data)}
+        </span>
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: '1.25rem' }}>
@@ -339,6 +367,7 @@ export default function Piscina() {
                 <option value="mezza">Mezza giornata</option>
                 <option value="ridotto">Ridotto (6-12 anni)</option>
                 <option value="soci">Soci</option>
+                <option value="sociRidotto">🤝👶 Soci Ridotto</option>
                 <option value="omaggio">🎁 Omaggio</option>
               </select>
             </div>
@@ -407,7 +436,7 @@ export default function Piscina() {
               color: p.tipoIngresso === 'giornaliero' ? '#0C447C' : '#27500A',
               borderRadius: 99, fontSize: 11, padding: '3px 8px', fontWeight: 500
             }}>
-              {({'giornaliero':'Giornaliero','mattina':'Mattina','pomeriggio':'Pomeriggio','mezza':'Mezza','ridotto':'Ridotto','soci':'Soci','omaggio':'🎁 Omaggio'})[p.tipoIngresso] || p.tipoIngresso}
+              {({'giornaliero':'Giornaliero','mattina':'Mattina','pomeriggio':'Pomeriggio','mezza':'Mezza','ridotto':'Ridotto','soci':'Soci','sociRidotto':'Soci Ridotto','omaggio':'🎁 Omaggio'})[p.tipoIngresso] || p.tipoIngresso}
             </span>
             <span style={{
               background: p.canale === 'telefonica' ? '#FAEEDA' : p.canale === 'in_sede' ? '#EAF3DE' : '#f5f5f3',
@@ -448,6 +477,7 @@ export default function Piscina() {
                   <option value="mezza">Mezza giornata</option>
                   <option value="ridotto">Ridotto (6-12 anni)</option>
                   <option value="soci">Soci</option>
+                  <option value="sociRidotto">🤝👶 Soci Ridotto</option>
                   <option value="omaggio">🎁 Omaggio</option>
                 </select>
               </div>
